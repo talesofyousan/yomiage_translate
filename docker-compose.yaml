@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  yomiage:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    image: yomiage:latest
+    container_name: yomiage
+    volumes:
+      - ./src/:/root/src
+    tty: true
+    # command: [
+    #   python /root/src/test_translation/test_translation.py
+    # ]
