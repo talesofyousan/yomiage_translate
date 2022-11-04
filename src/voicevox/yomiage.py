@@ -24,6 +24,34 @@ class YomiageV0132():
     def finalize(self):
         core.finalize()
 
+class YomiageV0114():
+    def __init__(self, root_dir_path, use_gpu, cpu_num_threads, speaker_id, f0_speaker_id, f0_correct):
+        core.initialize(root_dir_path, use_gpu, cpu_num_threads)
+        self.model = Forwarder(
+            yukarin_s_forwarder=core.yukarin_s_forward,
+            yukarin_sa_forwarder=core.yukarin_sa_forward,
+            decode_forwarder=core.decode_forward,
+        )
+        self.speaker_id = speaker_id
+        self.speaker_id=speaker_id,
+        self.f0_speaker_id=f0_speaker_id if f0_speaker_id is not None else speaker_id,
+        self.f0_correct=f0_correct,
+
+    def create_wave(self, text):
+        wave = self.model.forward(
+            text=text,
+            speaker_id=self.speaker_id,
+            f0_speaker_id=self.f0_speaker_id if self.f0_speaker_id is not None else self.speaker_id,
+            f0_correct=self.f0_correct,
+        )
+        return wave
+
+    def save_sound(self, sound, output_path):
+        soundfile.write(output_path, data=sound, samplerate=24000)
+
+    def finalize(self):
+        core.finalize()
+
 
 def split_text(text_all : str):
 
@@ -42,10 +70,12 @@ def run(
     use_gpu: bool,
     text_path: Path,
     speaker_id: int,
+    f0_speaker_id: Optional[int],
+    f0_correct: float,
+    root_dir_path: str,
     cpu_num_threads: int,
-    openjtalk_dict: str
 ) -> None:
-    yomiage = YomiageV0132(use_gpu, cpu_num_threads, openjtalk_dict, speaker_id)
+    yomiage = YomiageV0114(root_dir_path, use_gpu, cpu_num_threads, speaker_id, f0_speaker_id, f0_correct)
 
     with open(text_path, 'w') as f:
         text_all = f.read()
@@ -57,8 +87,7 @@ def run(
 
     for i, text in enumerate(list_text):
         wavefmt = yomiage.create_wave(text)
-        with open(output_dir / f"{i:08d}-{speaker_id}.wav", "wb") as f:
-            f.write(wavefmt)
+        yomiage.save_sound(wavefmt, output_dir / f"{i:08d}-{speaker_id}.wav")
 
     list_write_block = [t+'\n' for t in list_text]
     with open(output_dir / 'blocks.txt', 'w') as f:
