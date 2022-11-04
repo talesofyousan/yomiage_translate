@@ -1,9 +1,9 @@
 import argparse
 from typing import Optional
 import core
-from forwarder import Forwarder
 import soundfile
 from pathlib import Path
+from forwarder import Forwarder
 
 
 class YomiageV0132():
@@ -56,6 +56,7 @@ class YomiageV0114():
 def split_text(text_all : str):
 
     list_block = [s.split('、') for s in text_all.split('。')]
+    print(list_block)
     list_block = sum(list_block)
 
     for i, b in list_block:
@@ -69,6 +70,7 @@ def split_text(text_all : str):
 def run(
     use_gpu: bool,
     text_path: Path,
+    output_dir: Path,
     speaker_id: int,
     f0_speaker_id: Optional[int],
     f0_correct: float,
@@ -77,7 +79,7 @@ def run(
 ) -> None:
     yomiage = YomiageV0114(root_dir_path, use_gpu, cpu_num_threads, speaker_id, f0_speaker_id, f0_correct)
 
-    with open(text_path, 'w') as f:
+    with open(text_path, 'r') as f:
         text_all = f.read()
     list_text = split_text(text_all)
 
@@ -102,6 +104,8 @@ if __name__ == "__main__":
     parser.add_argument("--text_path", type=Path, required=True)
     parser.add_argument("--output_dir", type=Path, default='./artifacts')
     parser.add_argument("--speaker_id", type=int, required=True)
+    parser.add_argument("--f0_speaker_id", type=int)
+    parser.add_argument("--f0_correct", type=float, default=0)
+    parser.add_argument("--root_dir_path", type=str, default="./")
     parser.add_argument("--cpu_num_threads", type=int, default=0)
-    parser.add_argument("--openjtalk_dict", type=str, default="open_jtalk_dic_utf_8-1.11")
     run(**vars(parser.parse_args()))
