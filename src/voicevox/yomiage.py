@@ -1,7 +1,29 @@
 import argparse
-
+from typing import Optional
 import core
+from forwarder import Forwarder
+import soundfile
 from pathlib import Path
+
+
+class Yomiage():
+    def __init__(self, speaker_id, f0_speaker_id, f0_correct):
+        self.model = Forwarder(
+            yukarin_s_forwarder=core.yukarin_s_forward,
+            yukarin_sa_forwarder=core.yukarin_sa_forward,
+            decode_forwarder=core.decode_forward,
+        )
+        self.speaker_id = speaker_id
+        self.f0_speaker_id = f0_speaker_id
+        self.f0_correct = f0_correct
+
+    def create_wave(self, text):
+        return self.model.forward(
+            text=text,
+            speaker_id=self.speaker_id,
+            f0_speaker_id=self.f0_speaker_id if self.f0_speaker_id is not None else self.speaker_id,
+            f0_correct=self.f0_correct,
+        )
 
 
 def split_text(text_all : str):
@@ -21,16 +43,15 @@ def run(
     use_gpu: bool,
     text_path: Path,
     speaker_id: int,
-    output_dir: Path,
-    cpu_num_threads: int,
-    openjtalk_dict: str
+    f0_speaker_id: Optional[int],
+    f0_correct: float,
+    root_dir_path: str,
+    cpu_num_threads: int
 ) -> None:
     # コアの初期化
-    core.initialize(use_gpu, cpu_num_threads, load_all_models=False)
-    # openjtalk辞書のロード
-    core.voicevox_load_openjtalk_dict(openjtalk_dict)
-    # 話者のロード
-    core.load_model(speaker_id)
+    core.initialize(root_dir_path, use_gpu, cpu_num_threads)
+
+    yomiage = Yomiage(speaker_id, f0_speaker_id, f0_correct)
 
     with open(text_path, 'w') as f:
         text_all = f.read()
@@ -41,8 +62,7 @@ def run(
         output_dir.exists(parent=True)
 
     for i, text in enumerate(list_text):
-        audio_query = core.voicevox_audio_query(text, speaker_id)
-        wavefmt = core.voicevox_synthesis(audio_query, speaker_id)
+        wavefmt = yomiage.create_wave(text)
         with open(output_dir / f"{i:08d}-{speaker_id}.wav", "wb") as f:
             f.write(wavefmt)
 
@@ -59,6 +79,8 @@ if __name__ == "__main__":
     parser.add_argument("--text_path", type=Path, required=True)
     parser.add_argument("--output_dir", type=Path, default='./artifacts')
     parser.add_argument("--speaker_id", type=int, required=True)
+    parser.add_argument("--f0_speaker_id", type=int)
+    parser.add_argument("--f0_correct", type=float, default=0)
+    parser.add_argument("--root_dir_path", type=str, default="./")
     parser.add_argument("--cpu_num_threads", type=int, default=0)
-    parser.add_argument("--openjtalk_dict", type=str, default="voicevox_core/open_jtalk_dic_utf_8-1.11")
     run(**vars(parser.parse_args()))
