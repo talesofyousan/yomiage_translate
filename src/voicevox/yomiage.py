@@ -4,6 +4,8 @@ import core
 import soundfile
 from pathlib import Path
 from forwarder import Forwarder
+# from tqdm import tqdm_notebook as tqdm
+from tqdm import tqdm
 
 
 class YomiageV0132():
@@ -60,10 +62,15 @@ def split_text(text_all : str):
     for s in list_sentence:
         list_block += s
 
-    for i, b in list_block:
-        if len(b) <= 10:
-            list_block.pop(i)
-        list_block[i] = b + list_block[i]            
+    for i in range(len(list_block)):
+      if i == len(list_block) - 1:
+        if len(list_block[i])==0:
+          list_block.pop(i)
+        break
+      b = list_block[i]
+      if len(b) <= 10:
+        list_block.pop(i)
+        list_block[i] = b + list_block[i]
 
     return list_block
 
@@ -86,15 +93,15 @@ def run(
 
     output_dir = output_dir / 'voice'
     if not output_dir.exists():
-        output_dir.exists(parent=True)
+        output_dir.mkdir(parents=True)
 
-    for i, text in enumerate(list_text):
+    for i, text in tqdm(enumerate(list_text)):
         wavefmt = yomiage.create_wave(text)
         yomiage.save_sound(wavefmt, output_dir / f"{i:08d}-{speaker_id}.wav")
 
     list_write_block = [t+'\n' for t in list_text]
     with open(output_dir / 'blocks.txt', 'w') as f:
-        f.write_lines(list_write_block)
+        f.writelines(list_write_block)
 
     yomiage.finalize()
 
