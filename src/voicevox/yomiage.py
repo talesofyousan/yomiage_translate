@@ -55,9 +55,10 @@ class YomiageV0114():
 
 def split_text(text_all : str):
 
-    list_block = [s.split('、') for s in text_all.split('。')]
-    print(list_block)
-    list_block = sum(list_block)
+    list_sentence = [s.split('、') for s in text_all.split('。')]
+    list_block = []
+    for s in list_sentence:
+        list_block += s
 
     for i, b in list_block:
         if len(b) <= 10:
