@@ -1,7 +1,6 @@
 import argparse
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-import cv2
 import soundfile as sf
 import numpy as np
 # import moviepy as mpy
@@ -110,25 +109,6 @@ def run(text_path: Path, audio_dir:Path, font_path: Path, output_dir: Path):
     decode_mp4(list_frames, str(output_dir / 'yomiage.mp4'))
 
 
-def test():
-    audio_dir = Path('./src/inputs/')
-    list_audio_path = list(audio_dir.glob('*wav'))
-    fnt_path = './src/inputs/MPLUS1-Bold.ttf'
-
-    frame1 = Frame('hoge', fnt_path)
-    frame2 = Frame('hoge', fnt_path)
-    frame3 = Frame('hoge', fnt_path)
-
-    frame1.set_audio(list_audio_path[0])
-    frame2.set_audio(list_audio_path[1])
-    frame3.set_audio(list_audio_path[2])
-
-    sound = np.concatenate([frame1.sound, frame2.sound, frame3.sound])
-    sf.write('test.wav', data=sound, samplerate=24000)
-
-
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='動画生成モジュール')
     parser.add_argument('text_path', type=Path, help='テロップのパス')
@@ -137,5 +117,3 @@ if __name__ == '__main__':
     parser.add_argument('--output_dir', type=Path, required=False, default='artifacts', help='出力先')
     args = parser.parse_args()
     run(**vars(args))
-
-    # test()
